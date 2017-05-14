@@ -9,12 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -23,9 +22,153 @@ import java.util.stream.Collectors;
 public class BLSCrawler {
     private static final String REQUEST_URL = "http://www.ernaehrung.de/lebensmittel/suche/";
     private static final Logger LOGGER = LoggerFactory.getLogger(BLSCrawler.class);
+    private static final String CREATE_TABLE_STATEMENT = "USE foodscout;\n" +
+            "CREATE OR REPLACE TABLE food (\n" +
+            "SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'BLS-Schlüssel' CHECK(SBLS REGEXP '^[a-zA-Z][0-9]{6}$'),\n" +
+            "ST VARCHAR(60) NOT NULL COMMENT 'Text',\n" +
+            "STE VARCHAR(60) DEFAULT NULL COMMENT 'Text englisch',\n" +
+            "GCAL DOUBLE DEFAULT NULL COMMENT 'Energie (Kilokalorien)',\n" +
+            "GJ DOUBLE DEFAULT NULL COMMENT 'Energie (Kilojoule)',\n" +
+            "GCALZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilokalorien)',\n" +
+            "GJZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilojoule)',\n" +
+            "ZW DOUBLE DEFAULT NULL COMMENT 'Wasser',\n" +
+            "ZE DOUBLE DEFAULT NULL COMMENT 'Eiweiß (Protein)',\n" +
+            "ZF DOUBLE DEFAULT NULL COMMENT 'Fett',\n" +
+            "ZK DOUBLE DEFAULT NULL COMMENT 'Kohlenhydrate, resorbierbar',\n" +
+            "ZB DOUBLE DEFAULT NULL COMMENT 'Ballaststoffe',\n" +
+            "ZM DOUBLE DEFAULT NULL COMMENT 'Mineralstoffe (Rohasche)',\n" +
+            "ZO DOUBLE DEFAULT NULL COMMENT 'Organische Säuren',\n" +
+            "ZA DOUBLE DEFAULT NULL COMMENT 'Alkohol (Ethanol)',\n" +
+            "VA DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinoläquivalent',\n" +
+            "VAR DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinol',\n" +
+            "VAC DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Beta-Carotin',\n" +
+            "VD DOUBLE DEFAULT NULL COMMENT 'Vitamin D-Calciferole',\n" +
+            "VE DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopheroläquivalent',\n" +
+            "VEAT DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopherol',\n" +
+            "VK DOUBLE DEFAULT NULL COMMENT 'Vitamin K-Phyllochinon',\n" +
+            "VB1 DOUBLE DEFAULT NULL COMMENT 'Vitamin B1-Thiamin',\n" +
+            "VB2 DOUBLE DEFAULT NULL COMMENT 'Vitamin B2-Riboflavin',\n" +
+            "VB3 DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacin, Nicotinsäure',\n" +
+            "VB3A DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacinäquivalent',\n" +
+            "VB5 DOUBLE DEFAULT NULL COMMENT 'Vitamin B5-Pantothensäure',\n" +
+            "VB6 DOUBLE DEFAULT NULL COMMENT 'Vitamin B6-Pyridoxin',\n" +
+            "VB7 DOUBLE DEFAULT NULL COMMENT 'Vitamin B7-Biotin (Vitamin H)',\n" +
+            "VB9G DOUBLE DEFAULT NULL COMMENT 'Vitamin B9-gesamte Folsäure',\n" +
+            "VB12 DOUBLE DEFAULT NULL COMMENT 'Vitamin B12-Cobalamin',\n" +
+            "VC DOUBLE DEFAULT NULL COMMENT 'Vitamin C-Ascorbinsäure',\n" +
+            "MNA DOUBLE DEFAULT NULL COMMENT 'Natrium',\n" +
+            "MK DOUBLE DEFAULT NULL COMMENT 'Kalium',\n" +
+            "MCA DOUBLE DEFAULT NULL COMMENT 'Calcium',\n" +
+            "MMG DOUBLE DEFAULT NULL COMMENT 'Magnesium',\n" +
+            "MP DOUBLE DEFAULT NULL COMMENT 'Phosphor',\n" +
+            "MS DOUBLE DEFAULT NULL COMMENT 'Schwefel',\n" +
+            "MCL DOUBLE DEFAULT NULL COMMENT 'Chlorid',\n" +
+            "MFE DOUBLE DEFAULT NULL COMMENT 'Eisen',\n" +
+            "MZN DOUBLE DEFAULT NULL COMMENT 'Zink',\n" +
+            "MCU DOUBLE DEFAULT NULL COMMENT 'Kupfer',\n" +
+            "MMN DOUBLE DEFAULT NULL COMMENT 'Mangan',\n" +
+            "MF DOUBLE DEFAULT NULL COMMENT 'Fluorid',\n" +
+            "MJ DOUBLE DEFAULT NULL COMMENT 'Iodid',\n" +
+            "KAM DOUBLE DEFAULT NULL COMMENT 'Mannit',\n" +
+            "KAS DOUBLE DEFAULT NULL COMMENT 'Sorbit',\n" +
+            "KAX DOUBLE DEFAULT NULL COMMENT 'Xylit',\n" +
+            "KA DOUBLE DEFAULT NULL COMMENT 'Summe Zuckeralkohole',\n" +
+            "KMT DOUBLE DEFAULT NULL COMMENT 'Glucose (Traubenzucker)',\n" +
+            "KMF DOUBLE DEFAULT NULL COMMENT 'Fructose (Fruchtzucker)',\n" +
+            "KMG DOUBLE DEFAULT NULL COMMENT 'Galactose (Schleimzucker)',\n" +
+            "KM DOUBLE DEFAULT NULL COMMENT 'Monosaccharide (1 M)',\n" +
+            "KDS DOUBLE DEFAULT NULL COMMENT 'Saccharose (Rübenzucker)',\n" +
+            "KDM DOUBLE DEFAULT NULL COMMENT 'Maltose (Malzzucker)',\n" +
+            "KDL DOUBLE DEFAULT NULL COMMENT 'Lactose (Milchzucker)',\n" +
+            "KD DOUBLE DEFAULT NULL COMMENT 'Disaccharide (2 M)',\n" +
+            "KMD DOUBLE DEFAULT NULL COMMENT 'Zucker (gesamt)',\n" +
+            "KPOR DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, resorbierbar (3 - 9 M)',\n" +
+            "KPON DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, nicht resorbierbar',\n" +
+            "KPG DOUBLE DEFAULT NULL COMMENT 'Glykogen (tierische Stärke)',\n" +
+            "KPS DOUBLE DEFAULT NULL COMMENT 'Stärke',\n" +
+            "KP DOUBLE DEFAULT NULL COMMENT 'Polysaccharide (> 9 M)',\n" +
+            "KBP DOUBLE DEFAULT NULL COMMENT 'Poly-Pentosen',\n" +
+            "KBH DOUBLE DEFAULT NULL COMMENT 'Poly-Hexosen',\n" +
+            "KBU DOUBLE DEFAULT NULL COMMENT 'Poly-Uronsäure',\n" +
+            "KBC DOUBLE DEFAULT NULL COMMENT 'Cellulose',\n" +
+            "KBL DOUBLE DEFAULT NULL COMMENT 'Lignin',\n" +
+            "KBW DOUBLE DEFAULT NULL COMMENT 'Wasserlösliche Ballaststoffe',\n" +
+            "KBN DOUBLE DEFAULT NULL COMMENT 'Wasserunlösliche Ballaststoffe',\n" +
+            "EILE DOUBLE DEFAULT NULL COMMENT 'Isoleucin',\n" +
+            "ELEU DOUBLE DEFAULT NULL COMMENT 'Leucin',\n" +
+            "ELYS DOUBLE DEFAULT NULL COMMENT 'Lysin',\n" +
+            "EMET DOUBLE DEFAULT NULL COMMENT 'Methionin',\n" +
+            "ECYS DOUBLE DEFAULT NULL COMMENT 'Cystein',\n" +
+            "EPHE DOUBLE DEFAULT NULL COMMENT 'Phenylalanin',\n" +
+            "ETYR DOUBLE DEFAULT NULL COMMENT 'Tyrosin',\n" +
+            "ETHR DOUBLE DEFAULT NULL COMMENT 'Threonin',\n" +
+            "ETRP DOUBLE DEFAULT NULL COMMENT 'Tryptophan',\n" +
+            "EVAL DOUBLE DEFAULT NULL COMMENT 'Valin',\n" +
+            "EARG DOUBLE DEFAULT NULL COMMENT 'Arginin',\n" +
+            "EHIS DOUBLE DEFAULT NULL COMMENT 'Histidin',\n" +
+            "EEA DOUBLE DEFAULT NULL COMMENT 'Essentielle Aminosäuren',\n" +
+            "EALA DOUBLE DEFAULT NULL COMMENT 'Alanin',\n" +
+            "EASP DOUBLE DEFAULT NULL COMMENT 'Asparaginsäure',\n" +
+            "EGLU DOUBLE DEFAULT NULL COMMENT 'Glutaminsäure',\n" +
+            "EGLY DOUBLE DEFAULT NULL COMMENT 'Glycin',\n" +
+            "EPRO DOUBLE DEFAULT NULL COMMENT 'Prolin',\n" +
+            "ESER DOUBLE DEFAULT NULL COMMENT 'Serin',\n" +
+            "ENA DOUBLE DEFAULT NULL COMMENT 'Nichtessentielle Aminosäuren',\n" +
+            "EH DOUBLE DEFAULT NULL COMMENT 'Harnsäure',\n" +
+            "EP DOUBLE DEFAULT NULL COMMENT 'Purin',\n" +
+            "F40 DOUBLE DEFAULT NULL COMMENT 'Butansäure/Buttersäure',\n" +
+            "F60 DOUBLE DEFAULT NULL COMMENT 'Hexansäure/Capronsäure',\n" +
+            "F80 DOUBLE DEFAULT NULL COMMENT 'Octansäure/Caprylsäure',\n" +
+            "F100 DOUBLE DEFAULT NULL COMMENT 'Decansäure/Caprinsäure',\n" +
+            "F120 DOUBLE DEFAULT NULL COMMENT 'Dodecansäure/Laurinsäure',\n" +
+            "F140 DOUBLE DEFAULT NULL COMMENT 'Tetradecansäure/Myristinsäure',\n" +
+            "F150 DOUBLE DEFAULT NULL COMMENT 'Pentadecansäure',\n" +
+            "F160 DOUBLE DEFAULT NULL COMMENT 'Hexadecansäure/Palmitinsäure',\n" +
+            "F170 DOUBLE DEFAULT NULL COMMENT 'Heptadecansäure',\n" +
+            "F180 DOUBLE DEFAULT NULL COMMENT 'Octadecansäure/Stearinsäure',\n" +
+            "F200 DOUBLE DEFAULT NULL COMMENT 'Eicosansäure/Arachinsäure',\n" +
+            "F220 DOUBLE DEFAULT NULL COMMENT 'Docosansäure/Behensäure',\n" +
+            "F240 DOUBLE DEFAULT NULL COMMENT 'Tetracosansäure/Lignocerinsäure',\n" +
+            "FS DOUBLE DEFAULT NULL COMMENT 'Gesättigte Fettsäuren',\n" +
+            "F141 DOUBLE DEFAULT NULL COMMENT 'Tetradecensäure',\n" +
+            "F151 DOUBLE DEFAULT NULL COMMENT 'Pentadecensäure',\n" +
+            "F161 DOUBLE DEFAULT NULL COMMENT 'Hexadecensäure/Palmitoleinsäure',\n" +
+            "F171 DOUBLE DEFAULT NULL COMMENT 'Heptadecensäure',\n" +
+            "F181 DOUBLE DEFAULT NULL COMMENT 'Octadecensäure/Ölsäure',\n" +
+            "F201 DOUBLE DEFAULT NULL COMMENT 'Eicosensäure',\n" +
+            "F221 DOUBLE DEFAULT NULL COMMENT 'Docosensäure/Erucasäure',\n" +
+            "F241 DOUBLE DEFAULT NULL COMMENT 'Tetracosensäure/Nervonsäure',\n" +
+            "FU DOUBLE DEFAULT NULL COMMENT 'Einfach ungesättigte Fettsäuren',\n" +
+            "F162 DOUBLE DEFAULT NULL COMMENT 'Hexadecadiensäure',\n" +
+            "F164 DOUBLE DEFAULT NULL COMMENT 'Hexadecatetraensäure',\n" +
+            "F182 DOUBLE DEFAULT NULL COMMENT 'Octadecadiensäure/Linolsäure',\n" +
+            "F183 DOUBLE DEFAULT NULL COMMENT 'Octadecatriensäure/Linolensäure',\n" +
+            "F184 DOUBLE DEFAULT NULL COMMENT 'Octadecatetraensäure/Stearidonsäure',\n" +
+            "F193 DOUBLE DEFAULT NULL COMMENT 'Nonadecatriensäure',\n" +
+            "F202 DOUBLE DEFAULT NULL COMMENT 'Eicosadiensäure',\n" +
+            "F203 DOUBLE DEFAULT NULL COMMENT 'Eicosatriensäure',\n" +
+            "F204 DOUBLE DEFAULT NULL COMMENT 'Eicosatetraensäure/Arachidonsäure',\n" +
+            "F205 DOUBLE DEFAULT NULL COMMENT 'Eicosapentaensäure',\n" +
+            "F222 DOUBLE DEFAULT NULL COMMENT 'Docosadiensäure',\n" +
+            "F223 DOUBLE DEFAULT NULL COMMENT 'Docosatriensäure',\n" +
+            "F224 DOUBLE DEFAULT NULL COMMENT 'Docosatetraensäure',\n" +
+            "F225 DOUBLE DEFAULT NULL COMMENT 'Docosapentaensäure',\n" +
+            "F226 DOUBLE DEFAULT NULL COMMENT 'Docosahexaensäure',\n" +
+            "FP DOUBLE DEFAULT NULL COMMENT 'Mehrfach ungesättigte Fettsäuren',\n" +
+            "FK DOUBLE DEFAULT NULL COMMENT 'Kurzkettige Fettsäuren',\n" +
+            "FM DOUBLE DEFAULT NULL COMMENT 'Mittelkettige Fettsäuren',\n" +
+            "FL DOUBLE DEFAULT NULL COMMENT 'Langkettige Fettsäuren',\n" +
+            "FO3 DOUBLE DEFAULT NULL COMMENT 'Omega-3-Fettsäuren',\n" +
+            "FO6 DOUBLE DEFAULT NULL COMMENT 'Omega-6-Fettsäuren',\n" +
+            "FG DOUBLE DEFAULT NULL COMMENT 'Glycerin und Lipoide',\n" +
+            "FC DOUBLE DEFAULT NULL COMMENT 'Cholesterin',\n" +
+            "GFPS DOUBLE DEFAULT NULL COMMENT 'P/S Verhältnis',\n" +
+            "GKB DOUBLE DEFAULT NULL COMMENT 'Broteinheiten',\n" +
+            "GMKO DOUBLE DEFAULT NULL COMMENT 'Gesamt-Kochsalz',\n" +
+            "GP DOUBLE DEFAULT NULL COMMENT 'Mittlere Portionsgröße'\n" +
+            ") CHARACTER SET 'utf8';";
     private static final HashMap<String, BLSNutrient> WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP = new HashMap<>();
     private static final Set<String> WEBSITE_IGNORED_NUTRIENT_LONG_NAMES = new HashSet<>();
-
     static {
         //Hauptnährstoffe
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Broteinheiten", BLSNutrient.BROTEINHEITEN);
@@ -239,10 +382,18 @@ public class BLSCrawler {
     }
 
     public static void main(String[] args) throws IOException {
+//        StringBuilder createTableStatement = new StringBuilder();
+//        createTableStatement.append("CREATE OR REPLACE TABLE food (");
+////        createTableStatement.append("SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'long name...' CHECK(SBLS REGEXP '^[a-zA-Z][0-9]{6}$')");
+//        for(BLSNutrient blsNutrient : BLSNutrient.values()) {
+//            createTableStatement.append(blsNutrient.getTableColumnName()).append(" DOUBLE DEFAULT NULL COMMENT '").append(blsNutrient.getLongName()).append("',").append("\n");
+//        }
+//        createTableStatement.append(");");
+
         List<URL> foodURLs = getFoodURLs();
         String insertStatement = crawlFoodURLs(foodURLs);
         try (FileWriter fw = new FileWriter(System.getProperty("user.dir") + System.getProperty("file.separator") + "insert_foods.sql")) {//TODO command line parameter
-            fw.write(insertStatement);
+            fw.write(CREATE_TABLE_STATEMENT + "\n" + insertStatement);
         }
     }
 
@@ -277,29 +428,64 @@ public class BLSCrawler {
             }
         }
         insertStatement.append(")\n VALUES ");
-        //value lists
-        LocalDateTime start = LocalDateTime.now();
-        for(int i=0; i<foodURLs.size(); i++) {
-            LOGGER.debug("Crawling food URL " + (i+1) + " of " + foodURLs.size());
-            if(i%(foodURLs.size()/100) == 0) {
-                String remainingTime = "calculating...";
-                if(i != 0) {
-                    Duration elapsedTime = Duration.between(start, LocalDateTime.now());
-                    long remainingSeconds = elapsedTime.dividedBy(i).multipliedBy(foodURLs.size() - i).getSeconds();
-                    long hours = remainingSeconds / (60*60); //seconds per hour
-                    long minutes = ((remainingSeconds % (60*60)) / 60); //seconds per hour and seconds per minute
-                    long secs = (remainingSeconds % 60); //seconds per minute
-                    remainingTime = String.format("%02d:%02d:%02d", hours, minutes, secs);
+
+        //build tasks list
+        List<Callable<String>> tasks = new ArrayList<>();
+        for (final URL foodURL : foodURLs) {
+            Callable<String> c = () -> crawlFoodURL(foodURL);
+            tasks.add(c);
+        }
+
+        //execute
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        try {
+            LOGGER.info("Start crawling tasks");
+            LocalDateTime start = LocalDateTime.now();
+            List<Future<String>> results = new LinkedList<>();
+            for(Callable<String> task : tasks) {
+                results.add(executorService.submit(task));
+            }
+            //print progress during crawling
+            scheduledExecutorService.scheduleWithFixedDelay(() -> {
+                if(!Thread.currentThread().isInterrupted()) {
+                    String remainingTime = "calculating...";
+                    int processed = tasks.size() - results.size();
+                    if (processed > 0) {
+                        Duration elapsedTime = Duration.between(start, LocalDateTime.now());
+                        Duration estimatedRemainingTime = elapsedTime.dividedBy(processed).multipliedBy(results.size());
+                        remainingTime = prettyPrintDuration(estimatedRemainingTime);
+                    }
+                    LOGGER.info("Progress: " + processed / (foodURLs.size() / 100) + "%, remaining time: " + remainingTime);
                 }
-                LOGGER.info("Progress: " + i / (foodURLs.size() / 100) + "%, remaining Time: " + remainingTime);
+            }, 0, 3, TimeUnit.SECONDS);
+            first = true;
+            while(!results.isEmpty()) {
+                Iterator<Future<String>> it = results.iterator();
+                while(it.hasNext()) {
+                    Future<String> future = it.next();
+                    try {
+                        String result = future.get(1, TimeUnit.SECONDS);
+                        if (!first) {
+                            insertStatement.append(",\n ");
+                        }
+                        insertStatement.append(result);
+                        first = false;
+                        it.remove();
+                    } catch (TimeoutException e) {
+                        //swallow
+                    }
+                }
             }
-            if(i>0) {
-                insertStatement.append(",\n ");
-            }
-            insertStatement.append(crawlFoodURL(foodURLs.get(i)));
+            LOGGER.info("Completed crawling in " + prettyPrintDuration(Duration.between(start, LocalDateTime.now())));
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            scheduledExecutorService.shutdownNow();
+            executorService.shutdownNow();
         }
         insertStatement.append(";");
-        LOGGER.info("Finished crawling food URLs");
+        LOGGER.info("Finished crawling food URLs.");
         return insertStatement.toString();
     }
 
@@ -322,21 +508,21 @@ public class BLSCrawler {
                     if (!WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.containsKey(websiteNutrientLongName) && !WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.contains(websiteNutrientLongName)) {
                         LOGGER.debug("Unmapped nutrient \"" + websiteNutrientLongName + "\" " + nutrientAmountStr + (nutrientUnit != null && !nutrientUnit.isEmpty() ? " " + nutrientUnit : ""));
                     } else if (!nutrientAmountStr.isEmpty()) {
-                        BigDecimal containedAmount = new BigDecimal(nutrientAmountStr);
+                        double containedAmount = Double.valueOf(nutrientAmountStr);
                         if (nutrientUnit != null) {
                             switch (nutrientUnit) {
                                 case "g":
-                                    containedAmount = containedAmount.multiply(new BigDecimal(1000));
+                                    containedAmount *= 1000;
                                     break;
                                 case "mg":
                                     //do nothing
                                     break;
                                 case "µg":
-                                    containedAmount = containedAmount.divide(new BigDecimal(1000), RoundingMode.HALF_UP);
+                                    containedAmount /= 1000;
                                     break;
                             }
                         }
-                        food.put(WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.get(websiteNutrientLongName), containedAmount.toString());
+                        food.put(WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.get(websiteNutrientLongName), Double.toString(containedAmount));
                     }
                 }
             }
@@ -350,9 +536,26 @@ public class BLSCrawler {
                 valueList.append(", ");
             }
             first = false;
-            valueList.append(food.getOrDefault(blsNutrient, "NULL"));
+            if(blsNutrient.equals(BLSNutrient.BLS_SCHLUESSEL) || blsNutrient.equals(BLSNutrient.TEXT) || blsNutrient.equals(BLSNutrient.TEXT_ENGLISCH))
+            {
+                if(food.containsKey(blsNutrient)) {
+                    valueList.append("'").append(food.get(blsNutrient)).append("'");
+                } else {
+                    valueList.append("NULL");
+                }
+            } else {
+                valueList.append(food.getOrDefault(blsNutrient, "NULL"));
+            }
         }
         valueList.append(")");
         return valueList.toString();
+    }
+
+    private static String prettyPrintDuration(Duration duration) {
+        long seconds = duration.getSeconds();
+        long hours = seconds / (60*60); //seconds per hour
+        long minutes = ((seconds % (60*60)) / 60); //seconds per hour and seconds per minute
+        long secs = (seconds % 60); //seconds per minute
+        return String.format("%02d:%02d:%02d", hours, minutes, secs);
     }
 }

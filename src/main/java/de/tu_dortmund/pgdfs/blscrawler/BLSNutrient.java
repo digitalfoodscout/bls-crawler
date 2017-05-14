@@ -196,6 +196,10 @@ public enum BLSNutrient {
         return longName;
     }
 
+    public String getLongName() {
+        return longName;
+    }
+
     public String getTableColumnName() {
         return tableColumnName;
     }
