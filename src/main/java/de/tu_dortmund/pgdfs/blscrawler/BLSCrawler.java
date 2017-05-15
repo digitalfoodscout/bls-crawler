@@ -7,8 +7,11 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -27,148 +30,149 @@ public class BLSCrawler {
             "SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'BLS-Schlüssel' CHECK(SBLS REGEXP '^[a-zA-Z][0-9]{6}$'),\n" +
             "ST VARCHAR(60) NOT NULL COMMENT 'Text',\n" +
             "STE VARCHAR(60) DEFAULT NULL COMMENT 'Text englisch',\n" +
-            "GCAL DOUBLE DEFAULT NULL COMMENT 'Energie (Kilokalorien)',\n" +
-            "GJ DOUBLE DEFAULT NULL COMMENT 'Energie (Kilojoule)',\n" +
-            "GCALZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilokalorien)',\n" +
-            "GJZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilojoule)',\n" +
-            "ZW DOUBLE DEFAULT NULL COMMENT 'Wasser',\n" +
-            "ZE DOUBLE DEFAULT NULL COMMENT 'Eiweiß (Protein)',\n" +
-            "ZF DOUBLE DEFAULT NULL COMMENT 'Fett',\n" +
-            "ZK DOUBLE DEFAULT NULL COMMENT 'Kohlenhydrate, resorbierbar',\n" +
-            "ZB DOUBLE DEFAULT NULL COMMENT 'Ballaststoffe',\n" +
-            "ZM DOUBLE DEFAULT NULL COMMENT 'Mineralstoffe (Rohasche)',\n" +
-            "ZO DOUBLE DEFAULT NULL COMMENT 'Organische Säuren',\n" +
-            "ZA DOUBLE DEFAULT NULL COMMENT 'Alkohol (Ethanol)',\n" +
-            "VA DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinoläquivalent',\n" +
-            "VAR DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinol',\n" +
-            "VAC DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Beta-Carotin',\n" +
-            "VD DOUBLE DEFAULT NULL COMMENT 'Vitamin D-Calciferole',\n" +
-            "VE DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopheroläquivalent',\n" +
-            "VEAT DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopherol',\n" +
-            "VK DOUBLE DEFAULT NULL COMMENT 'Vitamin K-Phyllochinon',\n" +
-            "VB1 DOUBLE DEFAULT NULL COMMENT 'Vitamin B1-Thiamin',\n" +
-            "VB2 DOUBLE DEFAULT NULL COMMENT 'Vitamin B2-Riboflavin',\n" +
-            "VB3 DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacin, Nicotinsäure',\n" +
-            "VB3A DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacinäquivalent',\n" +
-            "VB5 DOUBLE DEFAULT NULL COMMENT 'Vitamin B5-Pantothensäure',\n" +
-            "VB6 DOUBLE DEFAULT NULL COMMENT 'Vitamin B6-Pyridoxin',\n" +
-            "VB7 DOUBLE DEFAULT NULL COMMENT 'Vitamin B7-Biotin (Vitamin H)',\n" +
-            "VB9G DOUBLE DEFAULT NULL COMMENT 'Vitamin B9-gesamte Folsäure',\n" +
-            "VB12 DOUBLE DEFAULT NULL COMMENT 'Vitamin B12-Cobalamin',\n" +
-            "VC DOUBLE DEFAULT NULL COMMENT 'Vitamin C-Ascorbinsäure',\n" +
-            "MNA DOUBLE DEFAULT NULL COMMENT 'Natrium',\n" +
-            "MK DOUBLE DEFAULT NULL COMMENT 'Kalium',\n" +
-            "MCA DOUBLE DEFAULT NULL COMMENT 'Calcium',\n" +
-            "MMG DOUBLE DEFAULT NULL COMMENT 'Magnesium',\n" +
-            "MP DOUBLE DEFAULT NULL COMMENT 'Phosphor',\n" +
-            "MS DOUBLE DEFAULT NULL COMMENT 'Schwefel',\n" +
-            "MCL DOUBLE DEFAULT NULL COMMENT 'Chlorid',\n" +
-            "MFE DOUBLE DEFAULT NULL COMMENT 'Eisen',\n" +
-            "MZN DOUBLE DEFAULT NULL COMMENT 'Zink',\n" +
-            "MCU DOUBLE DEFAULT NULL COMMENT 'Kupfer',\n" +
-            "MMN DOUBLE DEFAULT NULL COMMENT 'Mangan',\n" +
-            "MF DOUBLE DEFAULT NULL COMMENT 'Fluorid',\n" +
-            "MJ DOUBLE DEFAULT NULL COMMENT 'Iodid',\n" +
-            "KAM DOUBLE DEFAULT NULL COMMENT 'Mannit',\n" +
-            "KAS DOUBLE DEFAULT NULL COMMENT 'Sorbit',\n" +
-            "KAX DOUBLE DEFAULT NULL COMMENT 'Xylit',\n" +
-            "KA DOUBLE DEFAULT NULL COMMENT 'Summe Zuckeralkohole',\n" +
-            "KMT DOUBLE DEFAULT NULL COMMENT 'Glucose (Traubenzucker)',\n" +
-            "KMF DOUBLE DEFAULT NULL COMMENT 'Fructose (Fruchtzucker)',\n" +
-            "KMG DOUBLE DEFAULT NULL COMMENT 'Galactose (Schleimzucker)',\n" +
-            "KM DOUBLE DEFAULT NULL COMMENT 'Monosaccharide (1 M)',\n" +
-            "KDS DOUBLE DEFAULT NULL COMMENT 'Saccharose (Rübenzucker)',\n" +
-            "KDM DOUBLE DEFAULT NULL COMMENT 'Maltose (Malzzucker)',\n" +
-            "KDL DOUBLE DEFAULT NULL COMMENT 'Lactose (Milchzucker)',\n" +
-            "KD DOUBLE DEFAULT NULL COMMENT 'Disaccharide (2 M)',\n" +
-            "KMD DOUBLE DEFAULT NULL COMMENT 'Zucker (gesamt)',\n" +
-            "KPOR DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, resorbierbar (3 - 9 M)',\n" +
-            "KPON DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, nicht resorbierbar',\n" +
-            "KPG DOUBLE DEFAULT NULL COMMENT 'Glykogen (tierische Stärke)',\n" +
-            "KPS DOUBLE DEFAULT NULL COMMENT 'Stärke',\n" +
-            "KP DOUBLE DEFAULT NULL COMMENT 'Polysaccharide (> 9 M)',\n" +
-            "KBP DOUBLE DEFAULT NULL COMMENT 'Poly-Pentosen',\n" +
-            "KBH DOUBLE DEFAULT NULL COMMENT 'Poly-Hexosen',\n" +
-            "KBU DOUBLE DEFAULT NULL COMMENT 'Poly-Uronsäure',\n" +
-            "KBC DOUBLE DEFAULT NULL COMMENT 'Cellulose',\n" +
-            "KBL DOUBLE DEFAULT NULL COMMENT 'Lignin',\n" +
-            "KBW DOUBLE DEFAULT NULL COMMENT 'Wasserlösliche Ballaststoffe',\n" +
-            "KBN DOUBLE DEFAULT NULL COMMENT 'Wasserunlösliche Ballaststoffe',\n" +
-            "EILE DOUBLE DEFAULT NULL COMMENT 'Isoleucin',\n" +
-            "ELEU DOUBLE DEFAULT NULL COMMENT 'Leucin',\n" +
-            "ELYS DOUBLE DEFAULT NULL COMMENT 'Lysin',\n" +
-            "EMET DOUBLE DEFAULT NULL COMMENT 'Methionin',\n" +
-            "ECYS DOUBLE DEFAULT NULL COMMENT 'Cystein',\n" +
-            "EPHE DOUBLE DEFAULT NULL COMMENT 'Phenylalanin',\n" +
-            "ETYR DOUBLE DEFAULT NULL COMMENT 'Tyrosin',\n" +
-            "ETHR DOUBLE DEFAULT NULL COMMENT 'Threonin',\n" +
-            "ETRP DOUBLE DEFAULT NULL COMMENT 'Tryptophan',\n" +
-            "EVAL DOUBLE DEFAULT NULL COMMENT 'Valin',\n" +
-            "EARG DOUBLE DEFAULT NULL COMMENT 'Arginin',\n" +
-            "EHIS DOUBLE DEFAULT NULL COMMENT 'Histidin',\n" +
-            "EEA DOUBLE DEFAULT NULL COMMENT 'Essentielle Aminosäuren',\n" +
-            "EALA DOUBLE DEFAULT NULL COMMENT 'Alanin',\n" +
-            "EASP DOUBLE DEFAULT NULL COMMENT 'Asparaginsäure',\n" +
-            "EGLU DOUBLE DEFAULT NULL COMMENT 'Glutaminsäure',\n" +
-            "EGLY DOUBLE DEFAULT NULL COMMENT 'Glycin',\n" +
-            "EPRO DOUBLE DEFAULT NULL COMMENT 'Prolin',\n" +
-            "ESER DOUBLE DEFAULT NULL COMMENT 'Serin',\n" +
-            "ENA DOUBLE DEFAULT NULL COMMENT 'Nichtessentielle Aminosäuren',\n" +
-            "EH DOUBLE DEFAULT NULL COMMENT 'Harnsäure',\n" +
-            "EP DOUBLE DEFAULT NULL COMMENT 'Purin',\n" +
-            "F40 DOUBLE DEFAULT NULL COMMENT 'Butansäure/Buttersäure',\n" +
-            "F60 DOUBLE DEFAULT NULL COMMENT 'Hexansäure/Capronsäure',\n" +
-            "F80 DOUBLE DEFAULT NULL COMMENT 'Octansäure/Caprylsäure',\n" +
-            "F100 DOUBLE DEFAULT NULL COMMENT 'Decansäure/Caprinsäure',\n" +
-            "F120 DOUBLE DEFAULT NULL COMMENT 'Dodecansäure/Laurinsäure',\n" +
-            "F140 DOUBLE DEFAULT NULL COMMENT 'Tetradecansäure/Myristinsäure',\n" +
-            "F150 DOUBLE DEFAULT NULL COMMENT 'Pentadecansäure',\n" +
-            "F160 DOUBLE DEFAULT NULL COMMENT 'Hexadecansäure/Palmitinsäure',\n" +
-            "F170 DOUBLE DEFAULT NULL COMMENT 'Heptadecansäure',\n" +
-            "F180 DOUBLE DEFAULT NULL COMMENT 'Octadecansäure/Stearinsäure',\n" +
-            "F200 DOUBLE DEFAULT NULL COMMENT 'Eicosansäure/Arachinsäure',\n" +
-            "F220 DOUBLE DEFAULT NULL COMMENT 'Docosansäure/Behensäure',\n" +
-            "F240 DOUBLE DEFAULT NULL COMMENT 'Tetracosansäure/Lignocerinsäure',\n" +
-            "FS DOUBLE DEFAULT NULL COMMENT 'Gesättigte Fettsäuren',\n" +
-            "F141 DOUBLE DEFAULT NULL COMMENT 'Tetradecensäure',\n" +
-            "F151 DOUBLE DEFAULT NULL COMMENT 'Pentadecensäure',\n" +
-            "F161 DOUBLE DEFAULT NULL COMMENT 'Hexadecensäure/Palmitoleinsäure',\n" +
-            "F171 DOUBLE DEFAULT NULL COMMENT 'Heptadecensäure',\n" +
-            "F181 DOUBLE DEFAULT NULL COMMENT 'Octadecensäure/Ölsäure',\n" +
-            "F201 DOUBLE DEFAULT NULL COMMENT 'Eicosensäure',\n" +
-            "F221 DOUBLE DEFAULT NULL COMMENT 'Docosensäure/Erucasäure',\n" +
-            "F241 DOUBLE DEFAULT NULL COMMENT 'Tetracosensäure/Nervonsäure',\n" +
-            "FU DOUBLE DEFAULT NULL COMMENT 'Einfach ungesättigte Fettsäuren',\n" +
-            "F162 DOUBLE DEFAULT NULL COMMENT 'Hexadecadiensäure',\n" +
-            "F164 DOUBLE DEFAULT NULL COMMENT 'Hexadecatetraensäure',\n" +
-            "F182 DOUBLE DEFAULT NULL COMMENT 'Octadecadiensäure/Linolsäure',\n" +
-            "F183 DOUBLE DEFAULT NULL COMMENT 'Octadecatriensäure/Linolensäure',\n" +
-            "F184 DOUBLE DEFAULT NULL COMMENT 'Octadecatetraensäure/Stearidonsäure',\n" +
-            "F193 DOUBLE DEFAULT NULL COMMENT 'Nonadecatriensäure',\n" +
-            "F202 DOUBLE DEFAULT NULL COMMENT 'Eicosadiensäure',\n" +
-            "F203 DOUBLE DEFAULT NULL COMMENT 'Eicosatriensäure',\n" +
-            "F204 DOUBLE DEFAULT NULL COMMENT 'Eicosatetraensäure/Arachidonsäure',\n" +
-            "F205 DOUBLE DEFAULT NULL COMMENT 'Eicosapentaensäure',\n" +
-            "F222 DOUBLE DEFAULT NULL COMMENT 'Docosadiensäure',\n" +
-            "F223 DOUBLE DEFAULT NULL COMMENT 'Docosatriensäure',\n" +
-            "F224 DOUBLE DEFAULT NULL COMMENT 'Docosatetraensäure',\n" +
-            "F225 DOUBLE DEFAULT NULL COMMENT 'Docosapentaensäure',\n" +
-            "F226 DOUBLE DEFAULT NULL COMMENT 'Docosahexaensäure',\n" +
-            "FP DOUBLE DEFAULT NULL COMMENT 'Mehrfach ungesättigte Fettsäuren',\n" +
-            "FK DOUBLE DEFAULT NULL COMMENT 'Kurzkettige Fettsäuren',\n" +
-            "FM DOUBLE DEFAULT NULL COMMENT 'Mittelkettige Fettsäuren',\n" +
-            "FL DOUBLE DEFAULT NULL COMMENT 'Langkettige Fettsäuren',\n" +
-            "FO3 DOUBLE DEFAULT NULL COMMENT 'Omega-3-Fettsäuren',\n" +
-            "FO6 DOUBLE DEFAULT NULL COMMENT 'Omega-6-Fettsäuren',\n" +
-            "FG DOUBLE DEFAULT NULL COMMENT 'Glycerin und Lipoide',\n" +
-            "FC DOUBLE DEFAULT NULL COMMENT 'Cholesterin',\n" +
-            "GFPS DOUBLE DEFAULT NULL COMMENT 'P/S Verhältnis',\n" +
-            "GKB DOUBLE DEFAULT NULL COMMENT 'Broteinheiten',\n" +
-            "GMKO DOUBLE DEFAULT NULL COMMENT 'Gesamt-Kochsalz',\n" +
-            "GP DOUBLE DEFAULT NULL COMMENT 'Mittlere Portionsgröße'\n" +
-            ") CHARACTER SET 'utf8';";
+            "GCAL DOUBLE DEFAULT NULL COMMENT 'Energie (Kilokalorien) in kcal/100 g',\n" +
+            "GJ DOUBLE DEFAULT NULL COMMENT 'Energie (Kilojoule) in kJ/100 g',\n" +
+            "GCALZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilokalorien) in kcal/100 g',\n" +
+            "GJZB DOUBLE DEFAULT NULL COMMENT 'Energie inkl. Energie aus Ballaststoffen (Kilojoule) in kJ/100 g',\n" +
+            "ZW DOUBLE DEFAULT NULL COMMENT 'Wasser in mg/100 g',\n" +
+            "ZE DOUBLE DEFAULT NULL COMMENT 'Eiweiß (Protein) in mg/100 g',\n" +
+            "ZF DOUBLE DEFAULT NULL COMMENT 'Fett in mg/100 g',\n" +
+            "ZK DOUBLE DEFAULT NULL COMMENT 'Kohlenhydrate, resorbierbar in mg/100 g',\n" +
+            "ZB DOUBLE DEFAULT NULL COMMENT 'Ballaststoffe in mg/100 g',\n" +
+            "ZM DOUBLE DEFAULT NULL COMMENT 'Mineralstoffe (Rohasche) in mg/100 g',\n" +
+            "ZO DOUBLE DEFAULT NULL COMMENT 'Organische Säuren in mg/100 g',\n" +
+            "ZA DOUBLE DEFAULT NULL COMMENT 'Alkohol (Ethanol) in mg/100 g',\n" +
+            "VA DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinoläquivalent in mg/100 g',\n" +
+            "VAR DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Retinol in mg/100 g',\n" +
+            "VAC DOUBLE DEFAULT NULL COMMENT 'Vitamin A-Beta-Carotin in mg/100 g',\n" +
+            "VD DOUBLE DEFAULT NULL COMMENT 'Vitamin D-Calciferole in mg/100 g',\n" +
+            "VE DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopheroläquivalent in mg/100 g',\n" +
+            "VEAT DOUBLE DEFAULT NULL COMMENT 'Vitamin E-Alpha-Tocopherol in mg/100 g',\n" +
+            "VK DOUBLE DEFAULT NULL COMMENT 'Vitamin K-Phyllochinon in mg/100 g',\n" +
+            "VB1 DOUBLE DEFAULT NULL COMMENT 'Vitamin B1-Thiamin in mg/100 g',\n" +
+            "VB2 DOUBLE DEFAULT NULL COMMENT 'Vitamin B2-Riboflavin in mg/100 g',\n" +
+            "VB3 DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacin, Nicotinsäure in mg/100 g',\n" +
+            "VB3A DOUBLE DEFAULT NULL COMMENT 'Vitamin B3-Niacinäquivalent in mg/100 g',\n" +
+            "VB5 DOUBLE DEFAULT NULL COMMENT 'Vitamin B5-Pantothensäure in mg/100 g',\n" +
+            "VB6 DOUBLE DEFAULT NULL COMMENT 'Vitamin B6-Pyridoxin in mg/100 g',\n" +
+            "VB7 DOUBLE DEFAULT NULL COMMENT 'Vitamin B7-Biotin (Vitamin H) in mg/100 g',\n" +
+            "VB9G DOUBLE DEFAULT NULL COMMENT 'Vitamin B9-gesamte Folsäure in mg/100 g',\n" +
+            "VB12 DOUBLE DEFAULT NULL COMMENT 'Vitamin B12-Cobalamin in mg/100 g',\n" +
+            "VC DOUBLE DEFAULT NULL COMMENT 'Vitamin C-Ascorbinsäure in mg/100 g',\n" +
+            "MNA DOUBLE DEFAULT NULL COMMENT 'Natrium in mg/100 g',\n" +
+            "MK DOUBLE DEFAULT NULL COMMENT 'Kalium in mg/100 g',\n" +
+            "MCA DOUBLE DEFAULT NULL COMMENT 'Calcium in mg/100 g',\n" +
+            "MMG DOUBLE DEFAULT NULL COMMENT 'Magnesium in mg/100 g',\n" +
+            "MP DOUBLE DEFAULT NULL COMMENT 'Phosphor in mg/100 g',\n" +
+            "MS DOUBLE DEFAULT NULL COMMENT 'Schwefel in mg/100 g',\n" +
+            "MCL DOUBLE DEFAULT NULL COMMENT 'Chlorid in mg/100 g',\n" +
+            "MFE DOUBLE DEFAULT NULL COMMENT 'Eisen in mg/100 g',\n" +
+            "MZN DOUBLE DEFAULT NULL COMMENT 'Zink in mg/100 g',\n" +
+            "MCU DOUBLE DEFAULT NULL COMMENT 'Kupfer in mg/100 g',\n" +
+            "MMN DOUBLE DEFAULT NULL COMMENT 'Mangan in mg/100 g',\n" +
+            "MF DOUBLE DEFAULT NULL COMMENT 'Fluorid in mg/100 g',\n" +
+            "MJ DOUBLE DEFAULT NULL COMMENT 'Iodid in mg/100 g',\n" +
+            "KAM DOUBLE DEFAULT NULL COMMENT 'Mannit in mg/100 g',\n" +
+            "KAS DOUBLE DEFAULT NULL COMMENT 'Sorbit in mg/100 g',\n" +
+            "KAX DOUBLE DEFAULT NULL COMMENT 'Xylit in mg/100 g',\n" +
+            "KA DOUBLE DEFAULT NULL COMMENT 'Summe Zuckeralkohole in mg/100 g',\n" +
+            "KMT DOUBLE DEFAULT NULL COMMENT 'Glucose (Traubenzucker) in mg/100 g',\n" +
+            "KMF DOUBLE DEFAULT NULL COMMENT 'Fructose (Fruchtzucker) in mg/100 g',\n" +
+            "KMG DOUBLE DEFAULT NULL COMMENT 'Galactose (Schleimzucker) in mg/100 g',\n" +
+            "KM DOUBLE DEFAULT NULL COMMENT 'Monosaccharide (1 M) in mg/100 g',\n" +
+            "KDS DOUBLE DEFAULT NULL COMMENT 'Saccharose (Rübenzucker) in mg/100 g',\n" +
+            "KDM DOUBLE DEFAULT NULL COMMENT 'Maltose (Malzzucker) in mg/100 g',\n" +
+            "KDL DOUBLE DEFAULT NULL COMMENT 'Lactose (Milchzucker) in mg/100 g',\n" +
+            "KD DOUBLE DEFAULT NULL COMMENT 'Disaccharide (2 M) in mg/100 g',\n" +
+            "KMD DOUBLE DEFAULT NULL COMMENT 'Zucker (gesamt) in mg/100 g',\n" +
+            "KPOR DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, resorbierbar (3 - 9 M) in mg/100 g',\n" +
+            "KPON DOUBLE DEFAULT NULL COMMENT 'Oligosaccharide, nicht resorbierbar in mg/100 g',\n" +
+            "KPG DOUBLE DEFAULT NULL COMMENT 'Glykogen (tierische Stärke) in mg/100 g',\n" +
+            "KPS DOUBLE DEFAULT NULL COMMENT 'Stärke in mg/100 g',\n" +
+            "KP DOUBLE DEFAULT NULL COMMENT 'Polysaccharide (> 9 M) in mg/100 g',\n" +
+            "KBP DOUBLE DEFAULT NULL COMMENT 'Poly-Pentosen in mg/100 g',\n" +
+            "KBH DOUBLE DEFAULT NULL COMMENT 'Poly-Hexosen in mg/100 g',\n" +
+            "KBU DOUBLE DEFAULT NULL COMMENT 'Poly-Uronsäure in mg/100 g',\n" +
+            "KBC DOUBLE DEFAULT NULL COMMENT 'Cellulose in mg/100 g',\n" +
+            "KBL DOUBLE DEFAULT NULL COMMENT 'Lignin in mg/100 g',\n" +
+            "KBW DOUBLE DEFAULT NULL COMMENT 'Wasserlösliche Ballaststoffe in mg/100 g',\n" +
+            "KBN DOUBLE DEFAULT NULL COMMENT 'Wasserunlösliche Ballaststoffe in mg/100 g',\n" +
+            "EILE DOUBLE DEFAULT NULL COMMENT 'Isoleucin in mg/100 g',\n" +
+            "ELEU DOUBLE DEFAULT NULL COMMENT 'Leucin in mg/100 g',\n" +
+            "ELYS DOUBLE DEFAULT NULL COMMENT 'Lysin in mg/100 g',\n" +
+            "EMET DOUBLE DEFAULT NULL COMMENT 'Methionin in mg/100 g',\n" +
+            "ECYS DOUBLE DEFAULT NULL COMMENT 'Cystein in mg/100 g',\n" +
+            "EPHE DOUBLE DEFAULT NULL COMMENT 'Phenylalanin in mg/100 g',\n" +
+            "ETYR DOUBLE DEFAULT NULL COMMENT 'Tyrosin in mg/100 g',\n" +
+            "ETHR DOUBLE DEFAULT NULL COMMENT 'Threonin in mg/100 g',\n" +
+            "ETRP DOUBLE DEFAULT NULL COMMENT 'Tryptophan in mg/100 g',\n" +
+            "EVAL DOUBLE DEFAULT NULL COMMENT 'Valin in mg/100 g',\n" +
+            "EARG DOUBLE DEFAULT NULL COMMENT 'Arginin in mg/100 g',\n" +
+            "EHIS DOUBLE DEFAULT NULL COMMENT 'Histidin in mg/100 g',\n" +
+            "EEA DOUBLE DEFAULT NULL COMMENT 'Essentielle Aminosäuren in mg/100 g',\n" +
+            "EALA DOUBLE DEFAULT NULL COMMENT 'Alanin in mg/100 g',\n" +
+            "EASP DOUBLE DEFAULT NULL COMMENT 'Asparaginsäure in mg/100 g',\n" +
+            "EGLU DOUBLE DEFAULT NULL COMMENT 'Glutaminsäure in mg/100 g',\n" +
+            "EGLY DOUBLE DEFAULT NULL COMMENT 'Glycin in mg/100 g',\n" +
+            "EPRO DOUBLE DEFAULT NULL COMMENT 'Prolin in mg/100 g',\n" +
+            "ESER DOUBLE DEFAULT NULL COMMENT 'Serin in mg/100 g',\n" +
+            "ENA DOUBLE DEFAULT NULL COMMENT 'Nichtessentielle Aminosäuren in mg/100 g',\n" +
+            "EH DOUBLE DEFAULT NULL COMMENT 'Harnsäure in mg/100 g',\n" +
+            "EP DOUBLE DEFAULT NULL COMMENT 'Purin in mg/100 g',\n" +
+            "F40 DOUBLE DEFAULT NULL COMMENT 'Butansäure/Buttersäure in mg/100 g',\n" +
+            "F60 DOUBLE DEFAULT NULL COMMENT 'Hexansäure/Capronsäure in mg/100 g',\n" +
+            "F80 DOUBLE DEFAULT NULL COMMENT 'Octansäure/Caprylsäure in mg/100 g',\n" +
+            "F100 DOUBLE DEFAULT NULL COMMENT 'Decansäure/Caprinsäure in mg/100 g',\n" +
+            "F120 DOUBLE DEFAULT NULL COMMENT 'Dodecansäure/Laurinsäure in mg/100 g',\n" +
+            "F140 DOUBLE DEFAULT NULL COMMENT 'Tetradecansäure/Myristinsäure in mg/100 g',\n" +
+            "F150 DOUBLE DEFAULT NULL COMMENT 'Pentadecansäure in mg/100 g',\n" +
+            "F160 DOUBLE DEFAULT NULL COMMENT 'Hexadecansäure/Palmitinsäure in mg/100 g',\n" +
+            "F170 DOUBLE DEFAULT NULL COMMENT 'Heptadecansäure in mg/100 g',\n" +
+            "F180 DOUBLE DEFAULT NULL COMMENT 'Octadecansäure/Stearinsäure in mg/100 g',\n" +
+            "F200 DOUBLE DEFAULT NULL COMMENT 'Eicosansäure/Arachinsäure in mg/100 g',\n" +
+            "F220 DOUBLE DEFAULT NULL COMMENT 'Docosansäure/Behensäure in mg/100 g',\n" +
+            "F240 DOUBLE DEFAULT NULL COMMENT 'Tetracosansäure/Lignocerinsäure in mg/100 g',\n" +
+            "FS DOUBLE DEFAULT NULL COMMENT 'Gesättigte Fettsäuren in mg/100 g',\n" +
+            "F141 DOUBLE DEFAULT NULL COMMENT 'Tetradecensäure in mg/100 g',\n" +
+            "F151 DOUBLE DEFAULT NULL COMMENT 'Pentadecensäure in mg/100 g',\n" +
+            "F161 DOUBLE DEFAULT NULL COMMENT 'Hexadecensäure/Palmitoleinsäure in mg/100 g',\n" +
+            "F171 DOUBLE DEFAULT NULL COMMENT 'Heptadecensäure in mg/100 g',\n" +
+            "F181 DOUBLE DEFAULT NULL COMMENT 'Octadecensäure/Ölsäure in mg/100 g',\n" +
+            "F201 DOUBLE DEFAULT NULL COMMENT 'Eicosensäure in mg/100 g',\n" +
+            "F221 DOUBLE DEFAULT NULL COMMENT 'Docosensäure/Erucasäure in mg/100 g',\n" +
+            "F241 DOUBLE DEFAULT NULL COMMENT 'Tetracosensäure/Nervonsäure in mg/100 g',\n" +
+            "FU DOUBLE DEFAULT NULL COMMENT 'Einfach ungesättigte Fettsäuren in mg/100 g',\n" +
+            "F162 DOUBLE DEFAULT NULL COMMENT 'Hexadecadiensäure in mg/100 g',\n" +
+            "F164 DOUBLE DEFAULT NULL COMMENT 'Hexadecatetraensäure in mg/100 g',\n" +
+            "F182 DOUBLE DEFAULT NULL COMMENT 'Octadecadiensäure/Linolsäure in mg/100 g',\n" +
+            "F183 DOUBLE DEFAULT NULL COMMENT 'Octadecatriensäure/Linolensäure in mg/100 g',\n" +
+            "F184 DOUBLE DEFAULT NULL COMMENT 'Octadecatetraensäure/Stearidonsäure in mg/100 g',\n" +
+            "F193 DOUBLE DEFAULT NULL COMMENT 'Nonadecatriensäure in mg/100 g',\n" +
+            "F202 DOUBLE DEFAULT NULL COMMENT 'Eicosadiensäure in mg/100 g',\n" +
+            "F203 DOUBLE DEFAULT NULL COMMENT 'Eicosatriensäure in mg/100 g',\n" +
+            "F204 DOUBLE DEFAULT NULL COMMENT 'Eicosatetraensäure/Arachidonsäure in mg/100 g',\n" +
+            "F205 DOUBLE DEFAULT NULL COMMENT 'Eicosapentaensäure in mg/100 g',\n" +
+            "F222 DOUBLE DEFAULT NULL COMMENT 'Docosadiensäure in mg/100 g',\n" +
+            "F223 DOUBLE DEFAULT NULL COMMENT 'Docosatriensäure in mg/100 g',\n" +
+            "F224 DOUBLE DEFAULT NULL COMMENT 'Docosatetraensäure in mg/100 g',\n" +
+            "F225 DOUBLE DEFAULT NULL COMMENT 'Docosapentaensäure in mg/100 g',\n" +
+            "F226 DOUBLE DEFAULT NULL COMMENT 'Docosahexaensäure in mg/100 g',\n" +
+            "FP DOUBLE DEFAULT NULL COMMENT 'Mehrfach ungesättigte Fettsäuren in mg/100 g',\n" +
+            "FK DOUBLE DEFAULT NULL COMMENT 'Kurzkettige Fettsäuren in mg/100 g',\n" +
+            "FM DOUBLE DEFAULT NULL COMMENT 'Mittelkettige Fettsäuren in mg/100 g',\n" +
+            "FL DOUBLE DEFAULT NULL COMMENT 'Langkettige Fettsäuren in mg/100 g',\n" +
+            "FO3 DOUBLE DEFAULT NULL COMMENT 'Omega-3-Fettsäuren in mg/100 g',\n" +
+            "FO6 DOUBLE DEFAULT NULL COMMENT 'Omega-6-Fettsäuren in mg/100 g',\n" +
+            "FG DOUBLE DEFAULT NULL COMMENT 'Glycerin und Lipoide in mg/100 g',\n" +
+            "FC DOUBLE DEFAULT NULL COMMENT 'Cholesterin in mg/100 g',\n" +
+            "GFPS DOUBLE DEFAULT NULL COMMENT 'P/S Verhältnis in ',\n" +
+            "GKB DOUBLE DEFAULT NULL COMMENT 'Broteinheiten in BE',\n" +
+            "GMKO DOUBLE DEFAULT NULL COMMENT 'Gesamt-Kochsalz in mg/100 g',\n" +
+            "GP DOUBLE DEFAULT NULL COMMENT 'Mittlere Portionsgröße in g/Port'\n" +
+            ")\n" +
+            "CHARACTER SET 'utf8',\n" +
+            "COMMENT 'version as of " + LocalDateTime.now().toString() + "';";
     private static final HashMap<String, BLSNutrient> WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP = new HashMap<>();
-    private static final Set<String> WEBSITE_IGNORED_NUTRIENT_LONG_NAMES = new HashSet<>();
     static {
         //Hauptnährstoffe
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Broteinheiten", BLSNutrient.BROTEINHEITEN);
@@ -264,17 +268,17 @@ public class BLSCrawler {
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Palmitoleinsäure", BLSNutrient.HEXADECENSAEURE_PALMITOLEINSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Ölsäure", BLSNutrient.OCTADECENSAEURE_OELSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Eicosensäure", BLSNutrient.EICOSENSAEURE);
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C22:1 Fettsäure", ); //TODO ?
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C14:1 Fettsäure", ); //TODO BLSNutrient.TETRADECENSAEURE?
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C24:1 Fettsäure", ); //TODO ?
+        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C22:1 Fettsäure", BLSNutrient.DOCOSENSAEURE_ERUCASAEURE);
+        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C14:1 Fettsäure", BLSNutrient.TETRADECENSAEURE);
+        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C24:1 Fettsäure", BLSNutrient.TETRACOSENSAEURE_NERVONSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Linolsäure", BLSNutrient.OCTADECADIENSAEURE_LINOLSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Linolensäure", BLSNutrient.OCTADECATRIENSAEURE_LINOLENSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Arachidonsäure", BLSNutrient.EICOSATETRAENSAEURE_ARACHIDONSAEURE);
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C18:4 Fettsäure", );
+        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C18:4 Fettsäure", BLSNutrient.OCTADECATETRAENSAEURE_STEARIDONSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C20:5 N-3 Fettsäure", BLSNutrient.EICOSAPENTAENSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C22:5 N-3 Fettsäure", BLSNutrient.DOCOSAPENTAENSAEURE);
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C22:6 N-3 Fettsäure", BLSNutrient.DOCOSAHEXAENSAEURE);
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C16:2 Fettsäure", );
+        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("C16:2 Fettsäure", BLSNutrient.HEXADECADIENSAEURE);
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("sonst. gesättigte Fettsäuren", );
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("sonst. einfach unges. Fettsäuren", );
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Nonadecatriensäure", BLSNutrient.NONADECATRIENSAEURE);
@@ -332,7 +336,7 @@ public class BLSCrawler {
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("pflanzliches Eiweiß", );
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Harnsäure", BLSNutrient.HARNSAEURE);
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("sonst. organischen Säuren", );
-//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Mol-Diff. Kationen-Anionen		mä", );
+//        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Mol-Diff. Kationen-Anionen		Unit mä?", );
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Stickstoffaktor", );
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Fettsäurenanteil", );
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Mineralstoffanteil", );
@@ -340,60 +344,20 @@ public class BLSCrawler {
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Biolog. Wertigkeit", );
 //        WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("fruktosefreie Broteinheiten", );
         WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("durchschn. Verzehr", BLSNutrient.MITTLERE_PORTIONSGROESSE);
-
-        //Allergene und Zusatzstoffe
-        //WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.put("Fisch und Fischerzeugnisse", );
-
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Nicotinamid");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("freies Folsäureäquivalent");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("freie Folsäure");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Selen");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. essent. Aminosäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. n. essent. Aminosäuren");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("C22:1 Fettsäure"); //TODO ?
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("C14:1 Fettsäure"); //TODO BLSNutrient.TETRADECENSAEURE?
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("C24:1 Fettsäure"); //TODO ?
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("C16:2 Fettsäure");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. gesättigte Fettsäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. einfach unges. Fettsäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. mehrfach unges. Fettsäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. kurzkettige Fettsäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. mittelkettige Fettsäuren");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. langkettige Fettsäuren");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Pentosan");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Hexosan");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. Zuckeralkohole");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. Monosaccharide");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. Disaccharide");
-        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. Polysaccharide");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Purinbasen-Stickstoff");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Küchenabfälle");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. Eiweißstoffe");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("tierisches Eiweiß");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("pflanzliches Eiweiß");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("sonst. organischen Säuren");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Mol-Diff. Kationen-Anionen");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Stickstoffaktor");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Fettsäurenanteil");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Mineralstoffanteil");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Biolog. Wertigkeit");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("fruktosefreie Broteinheiten");
-//        WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.add("Fisch und Fischerzeugnisse");
     }
 
     public static void main(String[] args) throws IOException {
-//        StringBuilder createTableStatement = new StringBuilder();
-//        createTableStatement.append("CREATE OR REPLACE TABLE food (");
-////        createTableStatement.append("SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'long name...' CHECK(SBLS REGEXP '^[a-zA-Z][0-9]{6}$')");
-//        for(BLSNutrient blsNutrient : BLSNutrient.values()) {
-//            createTableStatement.append(blsNutrient.getTableColumnName()).append(" DOUBLE DEFAULT NULL COMMENT '").append(blsNutrient.getLongName()).append("',").append("\n");
-//        }
-//        createTableStatement.append(");");
+        if(args.length != 1) {
+            throw new IllegalArgumentException("Expected exactly one argument: path to file to save generated SQL to");
+        } else if(new File(args[0]).exists()) {
+            throw new IllegalArgumentException("Output file \"" + args[0] + "\" already exists! Delete the file and restart.");
+        }
 
         List<URL> foodURLs = getFoodURLs();
         String insertStatement = crawlFoodURLs(foodURLs);
-        try (FileWriter fw = new FileWriter(System.getProperty("user.dir") + System.getProperty("file.separator") + "insert_foods.sql")) {//TODO command line parameter
-            fw.write(CREATE_TABLE_STATEMENT + "\n" + insertStatement);
+        try (FileWriter fw = new FileWriter(args[0])) {
+            fw.write(CREATE_TABLE_STATEMENT + "\n\n" + insertStatement);
+            LOGGER.info("Generated SQL saved to " + new File(args[0]).getAbsolutePath());
         }
     }
 
@@ -496,33 +460,51 @@ public class BLSCrawler {
         Document resultsDoc = Jsoup.connect(foodURL.toString()).get();
         String foodName = resultsDoc.getElementById("wrapper").getElementsByTag("h1").text();
         food.put(BLSNutrient.TEXT, foodName);
-        List<Elements> tableRows = resultsDoc.getElementById("wrapper").getElementsByClass("table table-condensed table-striped table-bordered").stream().map(e -> e.getElementsByTag("tr")).collect(Collectors.toList());
+        List<Elements> tables = resultsDoc.getElementById("wrapper").getElementsByClass("table table-condensed table-striped table-bordered").subList(0, 7).stream().map(e -> e.getElementsByTag("tr")).collect(Collectors.toList());
         //parse data from tables
-        for(Elements elements : tableRows) {
-            for (Element tableRow : elements) {
+        for(Elements table : tables) {
+            for (Element tableRow : table) {
                 Elements tableData = tableRow.getElementsByTag("td");
-                if (!tableData.isEmpty()) {
+                if (!tableData.isEmpty()) { //to filter out table rows which only contain th-elements
                     String websiteNutrientLongName = tableData.get(0).text();
                     String nutrientAmountStr = tableData.get(1).text().replace(",", ".");
                     String nutrientUnit = (tableData.size() >= 3 ? tableData.get(2).text() : null);
-                    if (!WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.containsKey(websiteNutrientLongName) && !WEBSITE_IGNORED_NUTRIENT_LONG_NAMES.contains(websiteNutrientLongName)) {
-                        LOGGER.debug("Unmapped nutrient \"" + websiteNutrientLongName + "\" " + nutrientAmountStr + (nutrientUnit != null && !nutrientUnit.isEmpty() ? " " + nutrientUnit : ""));
+                    if (!WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.containsKey(websiteNutrientLongName)) {
+                        if(!nutrientAmountStr.isEmpty()) {
+                            LOGGER.warn("Unmapped nutrient in " + foodName + ": \"" + websiteNutrientLongName + "\" " + nutrientAmountStr + (nutrientUnit != null && !nutrientUnit.isEmpty() ? " " + nutrientUnit : ""));
+                        } else {
+                            LOGGER.debug("Unmapped nutrient in " + foodName + ": \"" + websiteNutrientLongName + "\" " + nutrientAmountStr + (nutrientUnit != null && !nutrientUnit.isEmpty() ? " " + nutrientUnit : ""));
+                        }
                     } else if (!nutrientAmountStr.isEmpty()) {
-                        double containedAmount = Double.valueOf(nutrientAmountStr);
+                        BigDecimal containedAmount = new BigDecimal(nutrientAmountStr);
                         if (nutrientUnit != null) {
                             switch (nutrientUnit) {
                                 case "g":
-                                    containedAmount *= 1000;
+                                    containedAmount = containedAmount.multiply(new BigDecimal(1000));
                                     break;
                                 case "mg":
                                     //do nothing
                                     break;
                                 case "µg":
-                                    containedAmount /= 1000;
+                                    containedAmount = containedAmount.divide(new BigDecimal(1000), RoundingMode.HALF_UP);
                                     break;
                             }
                         }
-                        food.put(WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.get(websiteNutrientLongName), Double.toString(containedAmount));
+//                        double containedAmount = Double.valueOf(nutrientAmountStr);
+//                        if (nutrientUnit != null) {
+//                            switch (nutrientUnit) {
+//                                case "g":
+//                                    containedAmount *= 1000;
+//                                    break;
+//                                case "mg":
+//                                    //do nothing
+//                                    break;
+//                                case "µg":
+//                                    containedAmount /= 1000;
+//                                    break;
+//                            }
+//                        }
+                        food.put(WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.get(websiteNutrientLongName), Double.toString(containedAmount.doubleValue()));
                     }
                 }
             }

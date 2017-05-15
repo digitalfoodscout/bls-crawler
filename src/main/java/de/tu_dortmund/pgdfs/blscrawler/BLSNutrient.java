@@ -129,20 +129,20 @@ public enum BLSNutrient {
     DOCOSANSAEURE_BEHENSAEURE("Docosansäure/Behensäure", "F220"),
     TETRACOSANSAEURE_LIGNOCERINSAEURE("Tetracosansäure/Lignocerinsäure", "F240"),
     GESAETTIGTE_FETTSAEUREN("Gesättigte Fettsäuren", "FS"),
-    TETRADECENSAEURE("Tetradecensäure", "F141"), //TODO no usage
+    TETRADECENSAEURE("Tetradecensäure", "F141"),
     PENTADECENSAEURE("Pentadecensäure", "F151"), //TODO no usage
     HEXADECENSAEURE_PALMITOLEINSAEURE("Hexadecensäure/Palmitoleinsäure", "F161"),
     HEPTADECENSAEURE("Heptadecensäure", "F171"), //TODO no usage
     OCTADECENSAEURE_OELSAEURE("Octadecensäure/Ölsäure", "F181"),
     EICOSENSAEURE("Eicosensäure", "F201"),
-    DOCOSENSAEURE_ERUCASAEURE("Docosensäure/Erucasäure", "F221"), //TODO no usage
-    TETRACOSENSAEURE_NERVONSAEURE("Tetracosensäure/Nervonsäure", "F241"), //TODO no usage
+    DOCOSENSAEURE_ERUCASAEURE("Docosensäure/Erucasäure", "F221"),
+    TETRACOSENSAEURE_NERVONSAEURE("Tetracosensäure/Nervonsäure", "F241"),
     EINFACH_UNGESAETTIGTE_FETTSAEUREN("Einfach ungesättigte Fettsäuren", "FU"),
-    HEXADECADIENSAEURE("Hexadecadiensäure", "F162"), //TODO no usage
+    HEXADECADIENSAEURE("Hexadecadiensäure", "F162"),
     HEXADECATETRAENSAEURE("Hexadecatetraensäure", "F164"), //TODO no usage
     OCTADECADIENSAEURE_LINOLSAEURE("Octadecadiensäure/Linolsäure", "F182"),
     OCTADECATRIENSAEURE_LINOLENSAEURE("Octadecatriensäure/Linolensäure", "F183"),
-    OCTADECATETRAENSAEURE_STEARIDONSAEURE("Octadecatetraensäure/Stearidonsäure", "F184"), //TODO no usage
+    OCTADECATETRAENSAEURE_STEARIDONSAEURE("Octadecatetraensäure/Stearidonsäure", "F184"),
     NONADECATRIENSAEURE("Nonadecatriensäure", "F193"),
     EICOSADIENSAEURE("Eicosadiensäure", "F202"),
     EICOSATRIENSAEURE("Eicosatriensäure", "F203"),
@@ -168,8 +168,8 @@ public enum BLSNutrient {
     GESAMT_KOCHSALZ("Gesamt-Kochsalz", "GMKO"),
     MITTLERE_PORTIONSGROESSE("Mittlere Portionsgröße", "GP", "g/Port");
 
-    private final static HashMap<String, BLSNutrient> LONG_NAME_TO_COLUMN_NAME_MAP = new HashMap<String, BLSNutrient>();
-    private final static HashMap<String, BLSNutrient> TABLE_COLUMN_NAME_TO_COLUMN_NAME_MAP = new HashMap<String, BLSNutrient>();
+    private final static HashMap<String, BLSNutrient> LONG_NAME_TO_COLUMN_NAME_MAP = new HashMap<>();
+    private final static HashMap<String, BLSNutrient> TABLE_COLUMN_NAME_TO_COLUMN_NAME_MAP = new HashMap<>();
     static {
         for (BLSNutrient columnName : values()) {
             LONG_NAME_TO_COLUMN_NAME_MAP.put(columnName.toString(), columnName);
