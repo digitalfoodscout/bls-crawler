@@ -27,7 +27,7 @@ public class BLSCrawler {
     private static final Logger LOGGER = LoggerFactory.getLogger(BLSCrawler.class);
     private static final String CREATE_TABLE_STATEMENT = "USE foodscout;\n" +
             "CREATE OR REPLACE TABLE food (\n" +
-            "SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'BLS-Schlüssel' CHECK(SBLS REGEXP '^[a-zA-Z][0-9]{6}$'),\n" +
+            "SBLS CHAR(7) NOT NULL PRIMARY KEY COMMENT 'BLS-Schlüssel' CHECK(SBLS REGEXP '^[a-zA-Z][0-9][0-9a-zA-Z]{2}[0-9]{3}$'),\n" +
             "ST VARCHAR(60) NOT NULL COMMENT 'Text',\n" +
             "STE VARCHAR(60) DEFAULT NULL COMMENT 'Text englisch',\n" +
             "GCAL DOUBLE DEFAULT NULL COMMENT 'Energie (Kilokalorien) in kcal/100 g',\n" +
@@ -168,7 +168,8 @@ public class BLSCrawler {
             "GFPS DOUBLE DEFAULT NULL COMMENT 'P/S Verhältnis in ',\n" +
             "GKB DOUBLE DEFAULT NULL COMMENT 'Broteinheiten in BE',\n" +
             "GMKO DOUBLE DEFAULT NULL COMMENT 'Gesamt-Kochsalz in mg/100 g',\n" +
-            "GP DOUBLE DEFAULT NULL COMMENT 'Mittlere Portionsgröße in g/Port'\n" +
+            "GP DOUBLE DEFAULT NULL COMMENT 'Mittlere Portionsgröße in g/Port',\n" +
+            "INDEX btree_food_st USING BTREE (ST)\n" +
             ")\n" +
             "CHARACTER SET 'utf8',\n" +
             "COMMENT 'version as of " + LocalDateTime.now().toString() + "';";
@@ -490,20 +491,6 @@ public class BLSCrawler {
                                     break;
                             }
                         }
-//                        double containedAmount = Double.valueOf(nutrientAmountStr);
-//                        if (nutrientUnit != null) {
-//                            switch (nutrientUnit) {
-//                                case "g":
-//                                    containedAmount *= 1000;
-//                                    break;
-//                                case "mg":
-//                                    //do nothing
-//                                    break;
-//                                case "µg":
-//                                    containedAmount /= 1000;
-//                                    break;
-//                            }
-//                        }
                         food.put(WEBSITE_NUTRIENT_LONG_NAME_TO_BLS_NUTRIENT_MAP.get(websiteNutrientLongName), Double.toString(containedAmount.doubleValue()));
                     }
                 }
